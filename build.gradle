@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'systems.cauldron'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    // deep learning inference
+    implementation('com.microsoft.onnxruntime:onnxruntime:1+')
+
+    // unit testing
+    testImplementation('org.junit.jupiter:junit-jupiter-api:5+')
+    testImplementation('org.junit.jupiter:junit-jupiter-params:5+')
+    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5+')
+
+    // logging
+    implementation('org.apache.logging.log4j:log4j-api:2+')
+    implementation('org.apache.logging.log4j:log4j-core:2+')
+
+    // developer ergonomics
+    compileOnly('org.projectlombok:lombok:1+')
+    annotationProcessor('org.projectlombok:lombok:1+')
+    testCompileOnly('org.projectlombok:lombok:1+')
+    testAnnotationProcessor('org.projectlombok:lombok:1+')
+
+}
+
+java {
+    modularity.inferModulePath = true
+}
+
+application {
+    mainModule.set('systems.cauldron.service.superresolution')
+    mainClass.set('systems.cauldron.service.superresolution.Application')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'systems.cauldron.service.superresolution.Application'
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
