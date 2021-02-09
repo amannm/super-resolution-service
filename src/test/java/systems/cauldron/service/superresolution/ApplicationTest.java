@@ -8,6 +8,6 @@ public class ApplicationTest {
 
     @Test
     public void basicTest() {
-        assertDoesNotThrow(() -> Application.main(new String[0]));
+        assertDoesNotThrow(() -> Server.main(new String[0]));
     }
 }

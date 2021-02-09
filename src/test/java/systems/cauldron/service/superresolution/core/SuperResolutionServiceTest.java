@@ -19,7 +19,7 @@ public class SuperResolutionServiceTest {
         int scalingFactor = 4;
         Path modelPath = Paths.get("models").resolve("esrgan.onnx");
         ImageData outputImage;
-        try (SuperResolutionService service = new SuperResolutionService(modelPath, scalingFactor)) {
+        try (InferenceService service = new InferenceService(modelPath, scalingFactor)) {
             outputImage = service.resolve(inputImage);
         }
         assertEquals(inputImage.getWidth() * scalingFactor, outputImage.getWidth());
