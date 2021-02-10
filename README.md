@@ -5,8 +5,6 @@
 * Compile with `./gradlew build`
 
 ## TODO
-* add API endpoint
 * dockerize
 * add CUDA/GPU supported build task
-* move model specific variables into a JSON config file
 * add more models
