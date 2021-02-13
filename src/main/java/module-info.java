@@ -2,6 +2,7 @@ module systems.cauldron.service.superresolution {
     requires static lombok;
     requires com.microsoft.onnxruntime;
     requires io.helidon.webserver;
+    requires io.helidon.webserver.cors;
     requires io.helidon.metrics;
     requires io.helidon.health.checks;
     requires io.helidon.health;

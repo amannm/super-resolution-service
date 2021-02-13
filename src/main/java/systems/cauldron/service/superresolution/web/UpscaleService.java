@@ -5,6 +5,8 @@ import io.helidon.webserver.Routing;
 import io.helidon.webserver.ServerRequest;
 import io.helidon.webserver.ServerResponse;
 import io.helidon.webserver.Service;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import systems.cauldron.service.superresolution.image.ByteImageData;
 import systems.cauldron.service.superresolution.image.FloatImageData;
 import systems.cauldron.service.superresolution.inference.InferenceServer;
@@ -13,6 +15,8 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 public class UpscaleService implements Service {
+
+    private final static Logger LOG = LogManager.getLogger(UpscaleService.class);
 
     private final InferenceServer inferenceServer;
 
@@ -45,7 +49,12 @@ public class UpscaleService implements Service {
                 .thenApply(FloatImageData::from)
                 .thenApply(inferenceServer::resolve)
                 .thenApply(ByteImageData::from)
-                .thenCompose(image -> response.status(200).send(image.getData().array()));
+                .thenCompose(image -> response.status(200).send(image.getData().array()))
+                .exceptionally(ex -> {
+                    LOG.error("error while upscaling", ex);
+                    response.status(500).send();
+                    return null;
+                });
     }
 
     private static int parsePositiveIntParam(Parameters parameters, String key) {
