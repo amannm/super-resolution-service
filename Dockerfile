@@ -10,7 +10,7 @@ WORKDIR /opt/app
 COPY build.gradle settings.gradle gradlew ./
 RUN chmod 755 ./gradlew
 COPY gradle ./gradle
-RUN ./gradlew build -Pgpu -x test || return 0
+RUN ./gradlew build || return 0
 COPY src ./src
 RUN ./gradlew assemble -Pgpu
 
