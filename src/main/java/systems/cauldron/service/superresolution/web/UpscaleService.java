@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public class UpscaleService implements Service {
 
-    private static final Logger LOG = LogManager.getLogger(UpscaleService.class.getName());
+    private final static Logger LOG = LogManager.getLogger(UpscaleService.class);
 
     private final InferenceServer inferenceServer;
 
@@ -26,10 +26,10 @@ public class UpscaleService implements Service {
 
     @Override
     public void update(Routing.Rules rules) {
-        rules.post("/upscale", this::consumeInput);
+        rules.post("/upscale", this::upscale);
     }
 
-    private void consumeInput(ServerRequest request, ServerResponse response) {
+    private void upscale(ServerRequest request, ServerResponse response) {
         Parameters parameters = request.queryParams();
 
         int width = parsePositiveIntParam(parameters, "width");
@@ -49,7 +49,12 @@ public class UpscaleService implements Service {
                 .thenApply(FloatImageData::from)
                 .thenApply(inferenceServer::resolve)
                 .thenApply(ByteImageData::from)
-                .thenCompose(image -> response.status(200).send(image.getData().array()));
+                .thenCompose(image -> response.status(200).send(image.getData().array()))
+                .exceptionally(ex -> {
+                    LOG.error("error while upscaling", ex);
+                    response.status(500).send();
+                    return null;
+                });
     }
 
     private static int parsePositiveIntParam(Parameters parameters, String key) {

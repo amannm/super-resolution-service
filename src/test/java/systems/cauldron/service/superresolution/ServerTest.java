@@ -89,6 +89,25 @@ public class ServerTest {
     }
 
     @Test
+    public void testInvalidUpscale() throws Exception {
+        AtomicReference<Integer> result = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        int width = 128;
+        int height = 128;
+        ByteBuffer testBuffer = ByteBuffer.allocate(width * height * 4);
+        webClient.post()
+                .path("/api/v1/upscale")
+                .queryParam("width", String.valueOf(width))
+                .queryParam("height", String.valueOf(height))
+                .submit(testBuffer.array())
+                .thenAccept(response -> result.set(response.status().code()))
+                .thenRun(latch::countDown);
+        latch.await(10L, TimeUnit.SECONDS);
+        Assertions.assertNotNull(result.get());
+        Assertions.assertEquals(500, result.get());
+    }
+
+    @Test
     public void testImageUpscale() throws Exception {
         Path inputPath = Paths.get("src", "test", "resources").resolve("baboon.png");
         ByteImageData imageData = ImageUtility.loadAsBytes(inputPath);

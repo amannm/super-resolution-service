@@ -1,10 +1,9 @@
 plugins {
     id 'java'
-    id 'application'
 }
 
-group 'systems.cauldron'
-version '1.0-SNAPSHOT'
+group = 'systems.cauldron'
+version = '1.0-SNAPSHOT'
 
 sourceCompatibility = '11'
 
@@ -15,11 +14,16 @@ repositories {
 dependencies {
 
     // deep learning inference
-    implementation('com.microsoft.onnxruntime:onnxruntime:1+')
+    if (project.hasProperty('gpu')) {
+        implementation 'com.microsoft.onnxruntime:onnxruntime_gpu:1+'
+    } else {
+        implementation 'com.microsoft.onnxruntime:onnxruntime:1+'
+    }
 
     //web server
-    implementation enforcedPlatform("io.helidon:helidon-dependencies:2+")
+    implementation enforcedPlatform('io.helidon:helidon-dependencies:2+')
     implementation 'io.helidon.webserver:helidon-webserver'
+    implementation 'io.helidon.webserver:helidon-webserver-cors'
     implementation 'io.helidon.media:helidon-media-jsonp'
     implementation 'io.helidon.config:helidon-config-yaml'
     implementation 'io.helidon.health:helidon-health'
@@ -28,42 +32,32 @@ dependencies {
     testImplementation 'io.helidon.webclient:helidon-webclient'
 
     // unit testing
-    testImplementation('org.junit.jupiter:junit-jupiter-api:5+')
-    testImplementation('org.junit.jupiter:junit-jupiter-params:5+')
-    testRuntimeOnly('org.junit.jupiter:junit-jupiter-engine:5+')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5+'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5+'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5+'
 
     // logging
-    implementation('org.apache.logging.log4j:log4j-api:2+')
-    implementation('org.apache.logging.log4j:log4j-core:2+')
+    implementation 'org.apache.logging.log4j:log4j-api:2+'
+    implementation 'org.apache.logging.log4j:log4j-core:2+'
 
     // developer ergonomics
-    compileOnly('org.projectlombok:lombok:1+')
-    annotationProcessor('org.projectlombok:lombok:1+')
-    testCompileOnly('org.projectlombok:lombok:1+')
-    testAnnotationProcessor('org.projectlombok:lombok:1+')
+    compileOnly 'org.projectlombok:lombok:1+'
+    annotationProcessor 'org.projectlombok:lombok:1+'
+    testCompileOnly 'org.projectlombok:lombok:1+'
+    testAnnotationProcessor 'org.projectlombok:lombok:1+'
 
+}
+
+test {
+    useJUnitPlatform()
 }
 
 java {
     modularity.inferModulePath = true
 }
 
-application {
-    mainModule.set('systems.cauldron.service.superresolution')
-    mainClass.set('systems.cauldron.service.superresolution.Application')
-}
-
-jar {
-    archiveFileName = "${project.name}.jar"
-    manifest {
-        attributes ('Main-Class': 'systems.cauldron.service.superresolution.Server',
-                'Class-Path': configurations.runtimeClasspath.files.collect { "libs/$it.name" }.join(' ')
-        )
-    }
-}
-
 compileJava {
-    inputs.property("moduleName", 'systems.cauldron.service.superresolution')
+    inputs.property('moduleName', 'systems.cauldron.service.superresolution')
     doFirst {
         options.compilerArgs = [
                 '--module-path', classpath.asPath,
@@ -72,14 +66,19 @@ compileJava {
     }
 }
 
-test {
-    useJUnitPlatform()
+jar {
+    archiveFileName = "app.jar"
+    manifest {
+        attributes ('Main-Class': 'systems.cauldron.service.superresolution.Server',
+                'Class-Path': configurations.runtimeClasspath.files.collect { "libs/$it.name" }.join(' ')
+        )
+    }
 }
 
-def copyLibs = tasks.register("copyLibs", Copy) {
-    it.from configurations.runtimeClasspath
-    it.into 'build/libs/libs'
-    it.dependsOn jar
+task copyLibs(type: Copy) {
+    from configurations.runtimeClasspath
+    into 'build/libs/libs'
+    dependsOn jar
 }
 
 assemble {

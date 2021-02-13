@@ -9,6 +9,8 @@ import io.helidon.metrics.MetricsSupport;
 import io.helidon.webserver.Routing;
 import io.helidon.webserver.Service;
 import io.helidon.webserver.WebServer;
+import io.helidon.webserver.cors.CorsSupport;
+import io.helidon.webserver.cors.CrossOriginConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import systems.cauldron.service.superresolution.inference.InferenceServer;
@@ -33,9 +35,11 @@ public class Server {
         LogConfig.configureRuntime();
 
         Config config = Config.create();
-        Config modelConfig = config.get("app").get("model");
+        Config appConfig = config.get("app");
+        Config modelConfig = appConfig.get("model");
         Path modelPath = Paths.get("models").resolve(modelConfig.get("filename").asString().get());
         int scalingFactor = modelConfig.get("scaling-factor").asInt().get();
+
         InferenceServer inferenceServer = new InferenceServer(modelPath, scalingFactor);
 
         UpscaleService upscaleService = new UpscaleService(inferenceServer);
@@ -60,7 +64,6 @@ public class Server {
             LOG.error("startup failed", ex);
             return null;
         });
-
         return server;
     }
 
@@ -72,7 +75,16 @@ public class Server {
         Routing.Builder routing = Routing.builder()
                 .register(health)
                 .register(metrics);
-        serviceMap.forEach(routing::register);
+        CorsSupport corsSupport = CorsSupport.builder()
+                .addCrossOrigin("/upscale", CrossOriginConfig.builder()
+                        .allowOrigins("*")
+                        .allowMethods("*")
+                        .allowHeaders("*")
+                        .allowCredentials(true)
+                        .enabled(true)
+                        .build())
+                .build();
+        serviceMap.forEach((path, service) -> routing.register(path, corsSupport, service));
         return routing.build();
     }
 }
