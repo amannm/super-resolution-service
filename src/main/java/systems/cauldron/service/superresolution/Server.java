@@ -33,9 +33,11 @@ public class Server {
         LogConfig.configureRuntime();
 
         Config config = Config.create();
-        Config modelConfig = config.get("app").get("model");
+        Config appConfig = config.get("app");
+        Config modelConfig = appConfig.get("model");
         Path modelPath = Paths.get("models").resolve(modelConfig.get("filename").asString().get());
         int scalingFactor = modelConfig.get("scaling-factor").asInt().get();
+
         InferenceServer inferenceServer = new InferenceServer(modelPath, scalingFactor);
 
         UpscaleService upscaleService = new UpscaleService(inferenceServer);

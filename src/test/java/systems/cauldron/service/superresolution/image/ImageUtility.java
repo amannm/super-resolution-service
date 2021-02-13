@@ -60,8 +60,7 @@ public class ImageUtility {
         reader.setInput(stream, true, true);
         int width = reader.getWidth(0);
         int height = reader.getHeight(0);
-        ByteBuffer pixelBuffer = ByteBuffer.allocate(width * height * NUM_ELEMENTS_PER_PIXEL)
-                .order(ByteOrder.nativeOrder());
+        ByteBuffer pixelBuffer = ByteBuffer.allocate(width * height * NUM_ELEMENTS_PER_PIXEL);
         DataBuffer dataBuffer = wrapAsDataBuffer(pixelBuffer);
         BufferedImage destination = wrapAsBufferedImage(dataBuffer, width, height);
 

@@ -25,9 +25,14 @@ public class InferenceServer implements AutoCloseable {
         try {
             this.env = OrtEnvironment.getEnvironment();
             this.opts = new OrtSession.SessionOptions();
+            if (System.getenv("CUDA_VERSION") != null) {
+                this.opts.addCUDA();
+                LOG.info("opening model '{}' for inference with CUDA", modelPath.getFileName());
+            } else {
+                LOG.info("opening model '{}' for inference", modelPath.getFileName());
+            }
             this.session = env.createSession(modelPath.toString(), opts);
             this.modelScalingFactor = modelScalingFactor;
-            LOG.info("opened model '{}' for inference", modelPath.getFileName());
             LOG.info("inputs: {}", session.getInputInfo().values());
             LOG.info("outputs: {}", session.getOutputInfo().values());
         } catch (OrtException ex) {
@@ -40,10 +45,11 @@ public class InferenceServer implements AutoCloseable {
         int inputHeight = inputImage.getHeight();
         LOG.info("resolving image with dimensions: {} x {}", inputWidth, inputHeight);
         FloatBuffer outputBuffer;
-        try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputImage.getData(), new long[]{1, 3, inputHeight, inputWidth});
-             OrtSession.Result result = session.run(Map.of("input", inputTensor))) {
-            OnnxTensor outputTensor = (OnnxTensor) result.get("output").orElseThrow(() -> new RuntimeException("no output returned from model"));
-            outputBuffer = outputTensor.getFloatBuffer();
+        try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputImage.getData(), new long[]{1, 3, inputHeight, inputWidth})) {
+            try (OrtSession.Result result = session.run(Map.of("input", inputTensor))) {
+                OnnxTensor outputTensor = (OnnxTensor) result.get("output").orElseThrow(() -> new RuntimeException("no output returned from model"));
+                outputBuffer = outputTensor.getFloatBuffer();
+            }
         } catch (OrtException ex) {
             throw new RuntimeException(ex);
         }
