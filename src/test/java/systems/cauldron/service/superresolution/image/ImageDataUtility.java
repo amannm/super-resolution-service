@@ -22,7 +22,13 @@ import java.nio.FloatBuffer;
 import java.nio.file.Path;
 import java.util.stream.IntStream;
 
-public class ImageUtility {
+/**
+ * This utility class aids in unit testing by:
+ * - converting local test images to/from the API image format (ByteImageData)
+ * - converting local test images to/from the inference model image format (FloatImageData)
+ * - displaying local test images for human verification
+ */
+public class ImageDataUtility {
 
     private static final int NUM_ELEMENTS_PER_PIXEL = 3;
     private static final int NUM_BYTES_PER_ELEMENT = 4;
@@ -60,8 +66,7 @@ public class ImageUtility {
         reader.setInput(stream, true, true);
         int width = reader.getWidth(0);
         int height = reader.getHeight(0);
-        ByteBuffer pixelBuffer = ByteBuffer.allocate(width * height * NUM_ELEMENTS_PER_PIXEL)
-                .order(ByteOrder.nativeOrder());
+        ByteBuffer pixelBuffer = ByteBuffer.allocate(width * height * NUM_ELEMENTS_PER_PIXEL);
         DataBuffer dataBuffer = wrapAsDataBuffer(pixelBuffer);
         BufferedImage destination = wrapAsBufferedImage(dataBuffer, width, height);
 
@@ -78,6 +83,11 @@ public class ImageUtility {
                 .width(width)
                 .height(height)
                 .build();
+    }
+
+    public static void show(Path imagePath) throws IOException {
+        Desktop desktop = Desktop.getDesktop();
+        desktop.open(imagePath.toFile());
     }
 
     public static void save(FloatImageData imageData, Path destinationPath, String mimeType) throws IOException {

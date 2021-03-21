@@ -29,49 +29,48 @@ public class UpscaleService implements Service {
         rules.post("/upscale", this::upscale);
     }
 
+    /**
+     * 1. convert the API image format to the inference model image format
+     * 2. execute inference model
+     * 3. convert the inference model image format back to the API image format
+     */
     private void upscale(ServerRequest request, ServerResponse response) {
         Parameters parameters = request.queryParams();
-
         int width = parsePositiveIntParam(parameters, "width");
-        if (width == -1) {
-            response.status(400).send();
-            return;
-        }
         int height = parsePositiveIntParam(parameters, "height");
-        if (height == -1) {
+        if (width == -1 || height == -1) {
             response.status(400).send();
-            return;
+        } else {
+            request.content().as(byte[].class)
+                    .thenApply(ByteBuffer::wrap)
+                    .thenApply(buffer -> ByteImageData.builder().data(buffer).width(width).height(height).build())
+                    .thenApply(FloatImageData::from)
+                    .thenApply(inferenceServer::resolve)
+                    .thenApply(ByteImageData::from)
+                    .thenCompose(image -> response.status(200).send(image.getData().array()))
+                    .exceptionally(ex -> {
+                        LOG.error("error while upscaling", ex);
+                        response.status(500).send();
+                        return null;
+                    });
         }
-
-        request.content().as(byte[].class)
-                .thenApply(ByteBuffer::wrap)
-                .thenApply(buffer -> ByteImageData.builder().data(buffer).width(width).height(height).build())
-                .thenApply(FloatImageData::from)
-                .thenApply(inferenceServer::resolve)
-                .thenApply(ByteImageData::from)
-                .thenCompose(image -> response.status(200).send(image.getData().array()))
-                .exceptionally(ex -> {
-                    LOG.error("error while upscaling", ex);
-                    response.status(500).send();
-                    return null;
-                });
     }
 
     private static int parsePositiveIntParam(Parameters parameters, String key) {
-        Optional<String> widthResult = parameters.first(key);
-        if (widthResult.isEmpty()) {
+        Optional<String> valueResult = parameters.first(key);
+        if (valueResult.isEmpty()) {
             return -1;
         } else {
-            int width;
+            int value;
             try {
-                width = Integer.parseInt(widthResult.get());
+                value = Integer.parseInt(valueResult.get());
             } catch (NumberFormatException ex) {
                 return -1;
             }
-            if (width <= 0) {
+            if (value <= 0) {
                 return -1;
             } else {
-                return width;
+                return value;
             }
         }
     }
