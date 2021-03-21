@@ -19,6 +19,7 @@ public class FloatImageData {
     private int width;
     private int height;
 
+    // convert byte color values [0-255] to float color values [0.0-1.0]
     public static FloatImageData from(ByteImageData byteImageData) {
         ByteBuffer source = byteImageData.getData();
         ByteBuffer sink = ByteBuffer.allocateDirect(source.remaining() * 4)

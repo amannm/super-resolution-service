@@ -18,6 +18,7 @@ public class ByteImageData {
     private int width;
     private int height;
 
+    // clamp and convert float color values [0.0-1.0] to byte color values [0-255]
     public static ByteImageData from(FloatImageData floatImageData) {
         FloatBuffer source = floatImageData.getData();
         ByteBuffer sink = ByteBuffer.allocate(source.remaining());

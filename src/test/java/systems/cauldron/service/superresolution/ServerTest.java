@@ -7,16 +7,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import systems.cauldron.service.superresolution.image.ByteImageData;
-import systems.cauldron.service.superresolution.image.ImageUtility;
+import systems.cauldron.service.superresolution.image.ImageDataUtility;
 
-import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerTest {
 
@@ -55,7 +52,7 @@ public class ServerTest {
                 .request()
                 .thenAccept(response -> Assertions.assertEquals(200, response.status().code()))
                 .toCompletableFuture()
-                .get();
+                .get(10L, TimeUnit.SECONDS);
     }
 
     @Test
@@ -65,77 +62,67 @@ public class ServerTest {
                 .request()
                 .thenAccept(response -> Assertions.assertEquals(200, response.status().code()))
                 .toCompletableFuture()
-                .get();
+                .get(10L, TimeUnit.SECONDS);
     }
 
     @Test
     public void testBlankUpscale() throws Exception {
-        AtomicReference<byte[]> result = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
         int width = 128;
         int height = 128;
         ByteBuffer testBuffer = ByteBuffer.allocate(width * height * 3);
-        webClient.post()
+        byte[] result = webClient.post()
                 .path("/api/v1/upscale")
                 .queryParam("width", String.valueOf(width))
                 .queryParam("height", String.valueOf(height))
                 .submit(testBuffer.array())
                 .thenCompose(response -> response.content().as(byte[].class))
-                .thenAccept(result::set)
-                .thenRun(latch::countDown);
-        latch.await(10L, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result.get());
-        Assertions.assertEquals(width * 4 * height * 4 * 3, result.get().length);
+                .toCompletableFuture()
+                .get(10L, TimeUnit.SECONDS);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(width * 4 * height * 4 * 3, result.length);
     }
 
     @Test
     public void testInvalidUpscale() throws Exception {
-        AtomicReference<Integer> result = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
         int width = 128;
         int height = 128;
         ByteBuffer testBuffer = ByteBuffer.allocate(width * height * 4);
-        webClient.post()
+        int result = webClient.post()
                 .path("/api/v1/upscale")
                 .queryParam("width", String.valueOf(width))
                 .queryParam("height", String.valueOf(height))
                 .submit(testBuffer.array())
-                .thenAccept(response -> result.set(response.status().code()))
-                .thenRun(latch::countDown);
-        latch.await(10L, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result.get());
-        Assertions.assertEquals(500, result.get());
+                .thenApply(response -> response.status().code())
+                .toCompletableFuture()
+                .get(10L, TimeUnit.SECONDS);
+        Assertions.assertEquals(500, result);
     }
 
     @Test
     public void testImageUpscale() throws Exception {
         Path inputPath = Paths.get("src", "test", "resources").resolve("baboon.png");
-        ByteImageData imageData = ImageUtility.loadAsBytes(inputPath);
+        ByteImageData imageData = ImageDataUtility.loadAsBytes(inputPath);
         ByteBuffer testBuffer = imageData.getData();
-        AtomicReference<byte[]> result = new AtomicReference<>();
-        CountDownLatch latch = new CountDownLatch(1);
         int width = imageData.getWidth();
         int height = imageData.getHeight();
-        webClient.post()
+        byte[] result = webClient.post()
                 .path("/api/v1/upscale")
                 .queryParam("width", String.valueOf(width))
                 .queryParam("height", String.valueOf(height))
                 .submit(testBuffer.array())
                 .thenCompose(response -> response.content().as(byte[].class))
-                .thenAccept(result::set)
-                .thenRun(latch::countDown);
-        latch.await(10L, TimeUnit.SECONDS);
-        Assertions.assertNotNull(result.get());
-        Assertions.assertEquals(width * 4 * height * 4 * 3, result.get().length);
+                .toCompletableFuture()
+                .get(10L, TimeUnit.SECONDS);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(width * 4 * height * 4 * 3, result.length);
 
         ByteImageData outputImage = ByteImageData.builder()
-                .data(ByteBuffer.wrap(result.get()))
+                .data(ByteBuffer.wrap(result))
                 .width(width * 4)
                 .height(height * 4)
                 .build();
         Path outputPath = Files.createTempFile(null, ".png");
-        ImageUtility.save(outputImage, outputPath, "image/png");
-        Desktop desktop = Desktop.getDesktop();
-        desktop.open(outputPath.toFile());
+        ImageDataUtility.save(outputImage, outputPath, "image/png");
+        ImageDataUtility.show(outputPath);
     }
 }
