@@ -16,8 +16,8 @@ public class ImageDataUtilityTest {
         Path inputPath = Paths.get("src", "test", "resources").resolve("baboon.png");
         FloatImageData inputImage = ImageDataUtility.loadAsFloats(inputPath);
 
-        assertEquals(125, inputImage.getWidth());
-        assertEquals(120, inputImage.getHeight());
+        assertEquals(125, inputImage.width());
+        assertEquals(120, inputImage.height());
 
         Path outputPath = Files.createTempFile(null, ".png");
         ImageDataUtility.save(inputImage, outputPath, "image/png");
@@ -33,8 +33,8 @@ public class ImageDataUtilityTest {
         Path inputPath = Paths.get("src", "test", "resources").resolve("baboon.png");
         ByteImageData inputImage = ImageDataUtility.loadAsBytes(inputPath);
 
-        assertEquals(125, inputImage.getWidth());
-        assertEquals(120, inputImage.getHeight());
+        assertEquals(125, inputImage.width());
+        assertEquals(120, inputImage.height());
 
         Path outputPath = Files.createTempFile(null, ".png");
         ImageDataUtility.save(inputImage, outputPath, "image/png");

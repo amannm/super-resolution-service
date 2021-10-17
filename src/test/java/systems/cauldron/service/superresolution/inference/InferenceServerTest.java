@@ -23,8 +23,8 @@ public class InferenceServerTest {
         try (InferenceServer service = new InferenceServer(modelPath, scalingFactor)) {
             outputImage = service.resolve(inputImage);
         }
-        assertEquals(inputImage.getWidth() * scalingFactor, outputImage.getWidth());
-        assertEquals(inputImage.getHeight() * scalingFactor, outputImage.getHeight());
+        assertEquals(inputImage.width() * scalingFactor, outputImage.width());
+        assertEquals(inputImage.height() * scalingFactor, outputImage.height());
         Path outputPath = Files.createTempFile(null, ".png");
         ImageDataUtility.save(outputImage, outputPath, "image/png");
         ImageDataUtility.show(outputPath);

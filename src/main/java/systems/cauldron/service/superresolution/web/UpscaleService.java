@@ -43,11 +43,12 @@ public class UpscaleService implements Service {
         } else {
             request.content().as(byte[].class)
                     .thenApply(ByteBuffer::wrap)
-                    .thenApply(buffer -> ByteImageData.builder().data(buffer).width(width).height(height).build())
-                    .thenApply(FloatImageData::from)
+                    .thenApply(buffer -> new ByteImageData(buffer, width, height))
+                    .thenApply(ByteImageData::toFloatImageData)
                     .thenApply(inferenceServer::resolve)
-                    .thenApply(ByteImageData::from)
-                    .thenCompose(image -> response.status(200).send(image.getData().array()))
+                    .thenApply(FloatImageData::toByteImageData)
+                    .thenApply(byteImageData -> byteImageData.data().array())
+                    .thenCompose(buffer -> response.status(200).send(buffer))
                     .exceptionally(ex -> {
                         LOG.error("error while upscaling", ex);
                         response.status(500).send();

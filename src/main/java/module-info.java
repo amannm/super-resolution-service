@@ -1,5 +1,4 @@
 module systems.cauldron.service.superresolution {
-    requires static lombok;
     requires com.microsoft.onnxruntime;
     requires io.helidon.webserver;
     requires io.helidon.webserver.cors;

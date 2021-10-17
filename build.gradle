@@ -5,9 +5,10 @@ plugins {
 group = 'systems.cauldron'
 version = '1.0-SNAPSHOT'
 
-sourceCompatibility = '11'
+sourceCompatibility = '17'
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -40,12 +41,6 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2+'
     implementation 'org.apache.logging.log4j:log4j-core:2+'
 
-    // developer ergonomics
-    compileOnly 'org.projectlombok:lombok:1+'
-    annotationProcessor 'org.projectlombok:lombok:1+'
-    testCompileOnly 'org.projectlombok:lombok:1+'
-    testAnnotationProcessor 'org.projectlombok:lombok:1+'
-
 }
 
 test {
@@ -67,12 +62,11 @@ compileJava {
 }
 
 jar {
-    archiveFileName = "app.jar"
-    manifest {
-        attributes ('Main-Class': 'systems.cauldron.service.superresolution.Server',
-                'Class-Path': configurations.runtimeClasspath.files.collect { "libs/$it.name" }.join(' ')
-        )
-    }
+    archiveFileName = 'app.jar'
+    manifest.attributes.putAll([
+            'Main-Class': 'systems.cauldron.service.superresolution.Server',
+            'Class-Path':  configurations.runtimeClasspath.files.collect { "libs/$it.name" }.join(' ')
+    ])
 }
 
 task copyLibs(type: Copy) {

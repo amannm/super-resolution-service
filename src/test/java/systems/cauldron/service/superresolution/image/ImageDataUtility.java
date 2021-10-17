@@ -53,11 +53,7 @@ public class ImageDataUtility {
             reader.dispose();
             stream.close();
         }
-        return FloatImageData.builder()
-                .data(pixelBuffer)
-                .width(width)
-                .height(height)
-                .build();
+        return new FloatImageData(pixelBuffer, width, height);
     }
 
     public static ByteImageData loadAsBytes(Path imagePath) throws IOException {
@@ -78,11 +74,7 @@ public class ImageDataUtility {
             reader.dispose();
             stream.close();
         }
-        return ByteImageData.builder()
-                .data(pixelBuffer)
-                .width(width)
-                .height(height)
-                .build();
+        return new ByteImageData(pixelBuffer, width, height);
     }
 
     public static void show(Path imagePath) throws IOException {
@@ -91,13 +83,13 @@ public class ImageDataUtility {
     }
 
     public static void save(FloatImageData imageData, Path destinationPath, String mimeType) throws IOException {
-        DataBuffer dataBuffer = wrapAsDataBuffer(imageData.getData());
-        save(dataBuffer, imageData.getWidth(), imageData.getHeight(), destinationPath, mimeType);
+        DataBuffer dataBuffer = wrapAsDataBuffer(imageData.data());
+        save(dataBuffer, imageData.width(), imageData.height(), destinationPath, mimeType);
     }
 
     public static void save(ByteImageData imageData, Path destinationPath, String mimeType) throws IOException {
-        DataBuffer dataBuffer = wrapAsDataBuffer(imageData.getData());
-        save(dataBuffer, imageData.getWidth(), imageData.getHeight(), destinationPath, mimeType);
+        DataBuffer dataBuffer = wrapAsDataBuffer(imageData.data());
+        save(dataBuffer, imageData.width(), imageData.height(), destinationPath, mimeType);
     }
 
     private static void save(DataBuffer dataBuffer, int width, int height, Path destinationPath, String mimeType) throws IOException {

@@ -40,25 +40,22 @@ public class InferenceServer implements AutoCloseable {
         }
     }
 
-    public FloatImageData resolve(FloatImageData inputImage) {
-        int inputWidth = inputImage.getWidth();
-        int inputHeight = inputImage.getHeight();
-        LOG.info("resolving image with dimensions: {} x {}", inputWidth, inputHeight);
-        FloatBuffer outputBuffer;
-        try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputImage.getData(), new long[]{1, 3, inputHeight, inputWidth})) {
+    public FloatImageData resolve(FloatImageData input) {
+        LOG.info("resolving image with dimensions: {} x {}", input.width(), input.height());
+        FloatBuffer outputData;
+        try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, input.data(), new long[]{1, 3, input.height(), input.width()})) {
             try (OrtSession.Result result = session.run(Map.of("input", inputTensor))) {
-                OnnxTensor outputTensor = (OnnxTensor) result.get("output").orElseThrow(() -> new RuntimeException("no output returned from model"));
-                outputBuffer = outputTensor.getFloatBuffer();
+                OnnxTensor outputTensor = (OnnxTensor) result.get("output")
+                        .orElseThrow(() -> new RuntimeException("no output returned from model"));
+                outputData = outputTensor.getFloatBuffer();
             }
         } catch (OrtException ex) {
             throw new RuntimeException(ex);
         }
         LOG.info("resolution complete");
-        return FloatImageData.builder()
-                .data(outputBuffer)
-                .width(inputImage.getWidth() * modelScalingFactor)
-                .height(inputImage.getHeight() * modelScalingFactor)
-                .build();
+        int outputWidth = input.width() * modelScalingFactor;
+        int outputHeight = input.height() * modelScalingFactor;
+        return new FloatImageData(outputData, outputWidth, outputHeight);
     }
 
     @Override

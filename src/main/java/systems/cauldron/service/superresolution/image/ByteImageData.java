@@ -1,35 +1,17 @@
 package systems.cauldron.service.superresolution.image;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
+import java.nio.ByteOrder;
 
-@Getter
-@Setter
-@EqualsAndHashCode
-@Builder
-public class ByteImageData {
-
-    private ByteBuffer data;
-    private int width;
-    private int height;
-
-    // clamp and convert float color values [0.0-1.0] to byte color values [0-255]
-    public static ByteImageData from(FloatImageData floatImageData) {
-        FloatBuffer source = floatImageData.getData();
-        ByteBuffer sink = ByteBuffer.allocate(source.remaining());
+public record ByteImageData(ByteBuffer data, int width, int height) {
+    public FloatImageData toFloatImageData() {
+        ByteBuffer source = data.duplicate();
+        ByteBuffer sink = ByteBuffer.allocateDirect(source.remaining() * 4)
+                .order(ByteOrder.nativeOrder());
         while (source.hasRemaining()) {
-            sink.put((byte) Math.round(255.0f * Math.max(0.0f, Math.min(1.0f, source.get()))));
+            sink.putFloat((source.get() & 0xff) / 255.0f);
         }
-        ByteBuffer sinkBuffer = sink.flip();
-        return ByteImageData.builder()
-                .data(sinkBuffer)
-                .width(floatImageData.getWidth())
-                .height(floatImageData.getHeight())
-                .build();
+        sink.flip();
+        return new FloatImageData(sink.asFloatBuffer(), width, height);
     }
 }

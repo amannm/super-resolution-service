@@ -1,4 +1,4 @@
-FROM openjdk:11-slim AS build
+FROM openjdk:17-slim AS build
 RUN ["jlink", "--compress=2", "--strip-debug", "--no-header-files", \
      "--add-modules", "java.base,java.logging,java.sql,java.desktop,java.management,java.naming,jdk.unsupported", \
      "--output", "/var/tmp/jre"]

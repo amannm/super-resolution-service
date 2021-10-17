@@ -102,9 +102,9 @@ public class ServerTest {
     public void testImageUpscale() throws Exception {
         Path inputPath = Paths.get("src", "test", "resources").resolve("baboon.png");
         ByteImageData imageData = ImageDataUtility.loadAsBytes(inputPath);
-        ByteBuffer testBuffer = imageData.getData();
-        int width = imageData.getWidth();
-        int height = imageData.getHeight();
+        ByteBuffer testBuffer = imageData.data();
+        int width = imageData.width();
+        int height = imageData.height();
         byte[] result = webClient.post()
                 .path("/api/v1/upscale")
                 .queryParam("width", String.valueOf(width))
@@ -116,11 +116,7 @@ public class ServerTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(width * 4 * height * 4 * 3, result.length);
 
-        ByteImageData outputImage = ByteImageData.builder()
-                .data(ByteBuffer.wrap(result))
-                .width(width * 4)
-                .height(height * 4)
-                .build();
+        ByteImageData outputImage = new ByteImageData(ByteBuffer.wrap(result), width * 4, height * 4);
         Path outputPath = Files.createTempFile(null, ".png");
         ImageDataUtility.save(outputImage, outputPath, "image/png");
         ImageDataUtility.show(outputPath);
